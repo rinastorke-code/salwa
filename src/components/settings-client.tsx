@@ -37,8 +37,12 @@ export function SettingsClient({ locations, centers }: { locations: Loc[]; cente
       <h1 className="text-xl font-bold">الإعدادات</h1>
 
       <section className="card space-y-3">
-        <h2 className="font-semibold">السقف السنوي للإجازات حسب الموقع</h2>
-        <p className="text-xs text-stone-400">اتركه فارغاً لاعتماد الافتراضي (30 يوماً).</p>
+        <h2 className="font-semibold">السقف الافتراضي المقترح حسب الموقع</h2>
+        <p className="text-xs text-stone-400">
+          هذا سقف افتراضي يُقترح فقط عند إضافة موظف جديد في هذا الموقع. السقف الفعلي
+          لكل موظف يُحدَّد ويُعدَّل بشكل فردي ومستقل من ملفه الشخصي (لأنه قد يختلف
+          من شخص لآخر حتى داخل نفس المركز).
+        </p>
         <div className="divide-y divide-stone-100">
           {locations.map((l) => (
             <div key={l.id} className="flex items-center justify-between gap-2 py-2">

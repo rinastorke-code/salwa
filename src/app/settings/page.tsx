@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getRole } from '@/lib/auth';
 import { SettingsClient } from '@/components/settings-client';
+import { StaffManager } from '@/components/staff-manager';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,5 +14,10 @@ export default async function SettingsPage() {
     supabase.from('locations').select('id, name, type, annual_cap').order('name'),
     supabase.rpc('list_centers'),
   ]);
-  return <SettingsClient locations={locations ?? []} centers={centers ?? []} />;
+  return (
+    <div className="space-y-6">
+      <SettingsClient locations={locations ?? []} centers={centers ?? []} />
+      <StaffManager />
+    </div>
+  );
 }

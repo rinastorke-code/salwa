@@ -9,7 +9,7 @@ export default async function EmployeesPage() {
   const supabase = createClient();
   const { data } = await supabase
     .from('v_employee_balance')
-    .select('id, full_name, national_id, remaining_days, is_active, location_id')
+    .select('id, full_name, national_id, remaining_days, cap, is_active, location_id')
     .order('full_name')
     .limit(300);
   const { data: locs } = await supabase.from('locations').select('id, name');
@@ -33,7 +33,7 @@ export default async function EmployeesPage() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-right text-xs text-slate-500">
             <tr><th className="p-3">الاسم</th><th className="p-3">الرقم الوطني</th>
-              <th className="p-3">الموقع</th><th className="p-3">الرصيد</th><th className="p-3">الحالة</th></tr>
+              <th className="p-3">الموقع</th><th className="p-3">السقف</th><th className="p-3">الرصيد</th><th className="p-3">الحالة</th></tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.map((e: any) => (
@@ -41,6 +41,7 @@ export default async function EmployeesPage() {
                 <td className="p-3"><Link href={`/employees/${e.id}`} className="font-medium text-brand">{e.full_name}</Link></td>
                 <td className="p-3 text-slate-500">{e.national_id}</td>
                 <td className="p-3 text-slate-500">{locMap.get(e.location_id) ?? '—'}</td>
+                <td className="p-3 text-stone-400">{e.cap}</td>
                 <td className="p-3"><span className={e.remaining_days <= 3 ? 'text-rose-600 font-semibold' : ''}>{e.remaining_days} يوم</span></td>
                 <td className="p-3"><span className={`badge ${e.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>{e.is_active ? 'فعّال' : 'موقوف'}</span></td>
               </tr>
