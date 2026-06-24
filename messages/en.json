@@ -1,0 +1,8 @@
+{
+  "app": { "title": "HR Management System", "subtitle": "Directorate of Social Affairs and Labor" },
+  "nav": { "dashboard": "Operations", "employees": "Employees", "leaves": "Leaves", "locations": "Org Structure", "import": "Import", "search": "Quick search (Ctrl+K)" },
+  "dash": { "total": "Total employees", "onleave": "On leave today", "low": "Low balances", "locations": "Locations", "absent_today": "Absent today" },
+  "emp": { "name": "Full name", "nid": "National ID", "location": "Location", "hire": "Hire date", "balance": "Leave balance", "status": "Status", "active": "Active", "inactive": "Suspended", "transfer": "Transfer", "history": "Transfer history", "360": "360 View" },
+  "leave": { "type": "Leave type", "annual": "Annual", "hourly": "Hourly", "sick": "Sick", "hours": "Hours", "from": "From", "to": "To", "doc": "Attached document", "add": "Record leave" },
+  "actions": { "export_pdf": "Export PDF", "save": "Save", "cancel": "Cancel", "confirm": "Confirm" }
+}
