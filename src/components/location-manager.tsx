@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 
@@ -47,28 +47,42 @@ function Form({ initial, locations, onSave, onCancel }: {
 }
 
 export function LocationManager({ locations }: { locations: Loc[] }) {
+  const [items, setItems] = useState(locations);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Loc | null>(null);
   const [msg, setMsg] = useState('');
   const router = useRouter();
 
+  // Keep local state in sync once the server data actually arrives,
+  // without ever falling back to stale/default names in between.
+  useEffect(() => { setItems(locations); }, [locations]);
+
   async function create(v: any) {
     const res = await fetch('/api/admin/locations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(v) });
     const d = await res.json();
     if (!res.ok) { setMsg(d.error); return; }
-    setAdding(false); router.refresh();
+    // Show the new location immediately — don't wait on the network round-trip.
+    setItems((prev) => [...prev, {
+      id: d.id, name: v.name, type: v.type,
+      parent_id: v.parent_id || null, annual_cap: v.annual_cap ? Number(v.annual_cap) : null,
+    }]);
+    setAdding(false); setMsg(''); router.refresh();
   }
   async function update(v: any) {
     const res = await fetch('/api/admin/locations', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editing!.id, ...v }) });
     const d = await res.json();
     if (!res.ok) { setMsg(d.error); return; }
-    setEditing(null); router.refresh();
+    setItems((prev) => prev.map((l) => l.id === editing!.id
+      ? { ...l, name: v.name, type: v.type, parent_id: v.parent_id || null, annual_cap: v.annual_cap ? Number(v.annual_cap) : null }
+      : l));
+    setEditing(null); setMsg(''); router.refresh();
   }
   async function remove(l: Loc) {
     if (!confirm(`حذف "${l.name}"؟ لا يمكن التراجع.`)) return;
     const res = await fetch('/api/admin/locations', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: l.id }) });
     const d = await res.json();
     if (!res.ok) { alert(d.error); return; }
+    setItems((prev) => prev.filter((x) => x.id !== l.id));
     router.refresh();
   }
 
@@ -80,7 +94,7 @@ export function LocationManager({ locations }: { locations: Loc[] }) {
       </div>
       {msg && <p className="rounded-xl bg-rose-50 p-2 text-xs text-rose-700">{msg}</p>}
       <div className="card divide-y divide-stone-100 p-0">
-        {locations.map((l) => (
+        {items.map((l) => (
           <div key={l.id} className="flex items-center justify-between p-3 text-sm">
             <div>
               <span className="font-medium">{l.name}</span>
@@ -93,13 +107,13 @@ export function LocationManager({ locations }: { locations: Loc[] }) {
             </div>
           </div>
         ))}
-        {locations.length === 0 && <p className="p-4 text-sm text-stone-400">لا توجد مواقع بعد.</p>}
+        {items.length === 0 && <p className="p-4 text-sm text-stone-400">لا توجد مواقع بعد.</p>}
       </div>
 
       {(adding || editing) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => { setAdding(false); setEditing(null); }}>
           <div onClick={(e) => e.stopPropagation()}>
-            <Form initial={editing ?? undefined} locations={locations}
+            <Form initial={editing ?? undefined} locations={items}
               onSave={editing ? update : create} onCancel={() => { setAdding(false); setEditing(null); }} />
           </div>
         </div>
