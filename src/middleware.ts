@@ -1,77 +1,39 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { getCenterSession } from '@/lib/center-session';
 
-export async function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
+export async function middleware(req: NextRequest) {
+  const path = req.nextUrl.pathname;
 
-  // ==========================================
-  // 1. حماية بوابات المراكز (عبر Jose JWT)
-  // ==========================================
+  // --- Center portal: isolated auth via signed cookie (checked in API) ---
   if (path.startsWith('/center')) {
-    // السماح بالوصول لصفحة تسجيل الدخول ومسار الـ API الخاص بها
-    if (path === '/center/login' || path === '/api/center/login') {
-      return NextResponse.next();
-    }
-    
-    // التحقق من صحة توكن المركز
-    const session = await getCenterSession();
-    if (!session) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/center/login';
-      const response = NextResponse.redirect(url);
-      response.cookies.delete('center_session'); // تنظيف التوكن التالف
-      return response;
+    const hasSession = req.cookies.has('center_session');
+    if (!hasSession && path !== '/center/login') {
+      return NextResponse.redirect(new URL('/center/login', req.url));
     }
     return NextResponse.next();
   }
+  // Center + import APIs handle their own auth
+  if (path.startsWith('/api/center') || path.startsWith('/api/import')) return NextResponse.next();
 
-  // ==========================================
-  // 2. حماية لوحة تحكم الإدارة (عبر Supabase Auth)
-  // ==========================================
-  let response = NextResponse.next({
-    request: { headers: request.headers },
-  });
-
+  // --- Central staff: Supabase Auth ---
+  let res = NextResponse.next({ request: req });
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({ name, value, ...options });
-          response = NextResponse.next({ request: { headers: request.headers } });
-          response.cookies.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({ name, value: '', ...options });
-          response = NextResponse.next({ request: { headers: request.headers } });
-          response.cookies.set({ name, value: '', ...options });
+        getAll() { return req.cookies.getAll(); },
+        setAll(toSet: { name: string; value: string; options: CookieOptions }[]) {
+          toSet.forEach(({ name, value }) => req.cookies.set(name, value));
+          res = NextResponse.next({ request: req });
+          toSet.forEach(({ name, value, options }) => res.cookies.set(name, value, options));
         },
       },
     }
   );
-
   const { data: { user } } = await supabase.auth.getUser();
-
-  const isPublicRoute = path.startsWith('/login') || path.startsWith('/api/') || path.startsWith('/_next') || path === '/sw.js';
-
-  // إذا لم يكن المستخدم مسجلاً ومسار الصفحة ليس عاماً، وجهه لتسجيل دخول الإدارة
-  if (!user && !isPublicRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
-  }
-
-  return response;
+  const isPublic = path.startsWith('/login') || path.startsWith('/_next');
+  if (!user && !isPublic) return NextResponse.redirect(new URL('/login', req.url));
+  return res;
 }
-
-export const config = {
-  matcher: [
-    /* تطابق جميع المسارات باستثناء الملفات الثابتة والصور */
-    '/((?!_next/static|_next/image|favicon.ico|brand|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
-};
+export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|brand).*)'] };
