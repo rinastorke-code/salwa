@@ -1,9 +1,10 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, CalendarDays, Network, History, Upload, BadgeCheck, ClipboardCheck, Settings } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { LayoutDashboard, Users, CalendarDays, Network, History, Upload, BadgeCheck, ClipboardCheck, Settings, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OfficialHeader } from '@/components/brand';
+import { createClient } from '@/lib/supabase/client';
 
 const items = [
   { href: '/', label: 'العمليات', Icon: LayoutDashboard },
@@ -21,8 +22,17 @@ const mobile = items.filter((i) => ['/', '/employees', '/attendance', '/confirma
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+
   if (path.startsWith('/login') || path.startsWith('/center')) return <>{children}</>;
   const active = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+
+  async function logout() {
+    await supabase.auth.signOut();
+    router.replace('/login');
+  }
+
   return (
     <div className="flex min-h-screen">
       {/* Sidebar (laptop) */}
@@ -37,6 +47,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
         </nav>
+        <button onClick={logout}
+          className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-stone-600 transition hover:bg-rose-50 hover:text-rose-600">
+          <LogOut size={18} /> تسجيل الخروج
+        </button>
         <p className="pt-3 text-center text-[10px] text-stone-400">بإدارة سلوى</p>
       </aside>
 
@@ -55,6 +69,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <Icon size={19} /><span>{label}</span>
             </Link>
           ))}
+          <button onClick={logout} className="flex flex-1 flex-col items-center gap-1 py-2 text-[10px] text-stone-500">
+            <LogOut size={19} /><span>خروج</span>
+          </button>
         </div>
       </nav>
     </div>
