@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   for (const e of entries ?? []) {
     if (!allowed.has(e.employee_id)) continue; // reject foreign ids silently
     const { error } = await admin.rpc('record_center_attendance', {
-      p_employee: e.employee_id, p_location: s.locationId, p_day: day,
+      p_employee: e.employee_id, p_location: s.location_id, p_day: day,
       p_status: e.status, p_reason: e.reason ?? null, p_hours: e.hours ?? null,
     });
     if (!error) saved++;
