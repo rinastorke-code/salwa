@@ -12,7 +12,13 @@ export async function createCenterSession(s: CenterSession) {
     .setIssuedAt()
     .setExpirationTime('12h')
     .sign(secret());
-  cookies().set(COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: true, path: '/', maxAge: 60 * 60 * 12 });
+  cookies().set(COOKIE, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 60 * 60 * 12,
+  });
 }
 
 export async function getCenterSession(): Promise<CenterSession | null> {
