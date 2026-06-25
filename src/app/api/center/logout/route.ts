@@ -1,7 +1,4 @@
 import { NextResponse } from 'next/server';
-import { destroyCenterSession } from '@/lib/center-session';
-
-export async function POST() {
-  await destroyCenterSession();
-  return NextResponse.json({ success: true });
-}
+import { clearCenterSession } from '@/lib/center-session';
+export const runtime = 'nodejs';
+export async function POST() { clearCenterSession(); return NextResponse.json({ ok: true }); }
