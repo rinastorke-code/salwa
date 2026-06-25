@@ -10,9 +10,17 @@ export async function POST(req: NextRequest) {
   const { day, entries } = await req.json();
   const admin = createAdmin();
 
-  // Verify every employee belongs to THIS center before writing (isolation guard)
-  const { data: mine } = await admin.from('employees').select('id').eq('location_id', s.location_id);
-  const allowed = new Set((mine ?? []).map((e) => e.id));
+  // تم تصحيح s.locationId إلى s.location_id ليتطابق مع نوع الجلسة الصحيح
+  const { data: emp } = await admin
+    .from('employees')
+    .select('id')
+    .eq('id', employee_id)
+    .eq('location_id', s.location_id)
+    .single();
+
+  if (!emp) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+
+  let p_type = type, p_end = null as string | null, p_hours = null as number | null;
 
   let saved = 0;
   for (const e of entries ?? []) {
