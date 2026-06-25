@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   const admin = createAdmin();
 
   // Verify every employee belongs to THIS center before writing (isolation guard)
-  const { data: mine } = await admin.from('employees').select('id').eq('location_id', s.location_id);
+  const { data: emp } = await admin.from('employees').select('id').eq('id', employee_id).eq('location_id', s.location_id).single();
   const allowed = new Set((mine ?? []).map((e) => e.id));
 
   let saved = 0;
